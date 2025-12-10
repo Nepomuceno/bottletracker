@@ -424,7 +424,6 @@ function App() {
           {isClient && (
             <ForestVisualization 
               bottleCount={submissions.length} 
-              maxTrees={50}
             />
           )}
         </div>
