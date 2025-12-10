@@ -32,6 +32,7 @@ import {
   type BottleSubmission,
   type GeocodingResult,
 } from '../data/carbon-calculator'
+import ForestVisualization from '../components/ForestVisualization'
 
 export const Route = createFileRoute('/')({ component: App })
 
@@ -410,6 +411,22 @@ function App() {
             </p>
             <p className="text-gray-400 text-xs">Equivalent</p>
           </div>
+        </div>
+      </section>
+
+      {/* Forest Visualization Section */}
+      <section className="py-6 px-6 max-w-4xl mx-auto">
+        <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700 rounded-2xl p-6">
+          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <Leaf className="w-5 h-5 text-emerald-400" />
+            Environmental Impact
+          </h2>
+          {isClient && (
+            <ForestVisualization 
+              bottleCount={submissions.length} 
+              maxTrees={50}
+            />
+          )}
         </div>
       </section>
 
