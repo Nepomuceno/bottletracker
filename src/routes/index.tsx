@@ -19,7 +19,6 @@ import {
 import {
   POPULAR_CITIES,
   calculateCarbonFootprint,
-  hasUserSubmitted,
   markUserAsSubmitted,
   isAdminMode,
   toggleAdminMode,
@@ -29,6 +28,8 @@ import {
   getCarbonEquivalent,
   resetUserSubmission,
   searchCities,
+  getUserSubmissionCount,
+  MAX_USER_SUBMISSIONS,
   type BottleSubmission,
   type GeocodingResult,
 } from '../data/carbon-calculator'
@@ -94,7 +95,7 @@ async function deleteBottle(id: string): Promise<boolean> {
 
 function App() {
   const [submissions, setSubmissions] = useState<BottleSubmission[]>([])
-  const [userSubmitted, setUserSubmitted] = useState(false)
+  const [userSubmissionCount, setUserSubmissionCount] = useState(0)
   const [adminMode, setAdminMode] = useState(false)
   const [showAdminPanel, setShowAdminPanel] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -116,7 +117,7 @@ function App() {
   // Load data on mount
   useEffect(() => {
     setIsClient(true)
-    setUserSubmitted(hasUserSubmitted())
+    setUserSubmissionCount(getUserSubmissionCount())
     setAdminMode(isAdminMode())
 
     // Fetch bottles from API
@@ -224,7 +225,7 @@ function App() {
 
       if (!adminMode) {
         markUserAsSubmitted()
-        setUserSubmitted(true)
+        setUserSubmissionCount(prev => prev + 1)
       }
 
       setSelectedCity('')
@@ -266,7 +267,7 @@ function App() {
   // Handle reset user submission
   const handleResetUserSubmission = useCallback(() => {
     resetUserSubmission()
-    setUserSubmitted(false)
+    setUserSubmissionCount(0)
   }, [])
 
   // Handle selecting a geocoding result
@@ -284,7 +285,8 @@ function App() {
     setGeocodingResults([])
   }, [])
 
-  const canSubmit = !userSubmitted || adminMode
+  const canSubmit = userSubmissionCount < MAX_USER_SUBMISSIONS || adminMode
+  const remainingSubmissions = MAX_USER_SUBMISSIONS - userSubmissionCount
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-emerald-900 via-emerald-800 to-slate-900">
@@ -414,21 +416,6 @@ function App() {
         </div>
       </section>
 
-      {/* Forest Visualization Section */}
-      <section className="py-6 px-6 max-w-4xl mx-auto">
-        <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700 rounded-2xl p-6">
-          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-            <Leaf className="w-5 h-5 text-emerald-400" />
-            Environmental Impact
-          </h2>
-          {isClient && (
-            <ForestVisualization 
-              bottleCount={submissions.length} 
-            />
-          )}
-        </div>
-      </section>
-
       {/* Add City Section */}
       <section className="py-6 px-6 max-w-4xl mx-auto">
         <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700 rounded-2xl p-6">
@@ -449,7 +436,7 @@ function App() {
             <div className="text-center py-6">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/20 text-emerald-400 rounded-lg mb-3">
                 <Leaf className="w-5 h-5" />
-                <span>You've already added your bottle!</span>
+                <span>You've added all {MAX_USER_SUBMISSIONS} bottles!</span>
               </div>
               <p className="text-gray-400 text-sm">
                 Thank you for participating in tracking our carbon footprint.
@@ -457,6 +444,15 @@ function App() {
             </div>
           ) : (
             <>
+              {/* Remaining submissions indicator */}
+              {isClient && !adminMode && (
+                <div className="mb-4 flex items-center justify-center">
+                  <span className="text-sm text-gray-400">
+                    You can add <span className="text-emerald-400 font-semibold">{remainingSubmissions}</span> more bottle{remainingSubmissions !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              )}
+
               {/* Search Input */}
               <div className="relative mb-4">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -590,6 +586,21 @@ function App() {
                 Bottle added successfully! Thank you for tracking your carbon footprint.
               </p>
             </div>
+          )}
+        </div>
+      </section>
+
+      {/* Forest Visualization Section */}
+      <section className="py-6 px-6 max-w-4xl mx-auto">
+        <div className="bg-slate-800/70 backdrop-blur-sm border border-slate-700 rounded-2xl p-6">
+          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <Leaf className="w-5 h-5 text-emerald-400" />
+            Environmental Impact
+          </h2>
+          {isClient && (
+            <ForestVisualization 
+              bottleCount={submissions.length} 
+            />
           )}
         </div>
       </section>

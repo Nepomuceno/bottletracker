@@ -145,18 +145,41 @@ export interface BottleSubmission {
 // Local storage keys (for user preferences, not shared data)
 export const STORAGE_KEYS = {
   USER_SUBMITTED: 'bottle_tracker_user_submitted',
+  USER_SUBMISSION_COUNT: 'bottle_tracker_submission_count',
   ADMIN_MODE: 'bottle_tracker_admin_mode',
 }
 
-// Check if user has already submitted
-export function hasUserSubmitted(): boolean {
-  if (typeof window === 'undefined') return false
-  return localStorage.getItem(STORAGE_KEYS.USER_SUBMITTED) === 'true'
+// Maximum bottles a user can submit
+export const MAX_USER_SUBMISSIONS = 5
+
+// Get user's submission count
+export function getUserSubmissionCount(): number {
+  if (typeof window === 'undefined') return 0
+  const count = localStorage.getItem(STORAGE_KEYS.USER_SUBMISSION_COUNT)
+  return count ? parseInt(count, 10) : 0
 }
 
-// Mark user as having submitted
+// Check if user has reached their submission limit
+export function hasUserReachedLimit(): boolean {
+  return getUserSubmissionCount() >= MAX_USER_SUBMISSIONS
+}
+
+// Check if user has already submitted (legacy - now checks if reached limit)
+export function hasUserSubmitted(): boolean {
+  return hasUserReachedLimit()
+}
+
+// Increment user submission count
+export function incrementSubmissionCount(): number {
+  const currentCount = getUserSubmissionCount()
+  const newCount = currentCount + 1
+  localStorage.setItem(STORAGE_KEYS.USER_SUBMISSION_COUNT, String(newCount))
+  return newCount
+}
+
+// Mark user as having submitted (legacy - now increments count)
 export function markUserAsSubmitted(): void {
-  localStorage.setItem(STORAGE_KEYS.USER_SUBMITTED, 'true')
+  incrementSubmissionCount()
 }
 
 // Check if admin mode is enabled
@@ -219,6 +242,7 @@ export function getCarbonEquivalent(carbonKg: number): string {
 // Clear user submission flag (allow them to submit again)
 export function resetUserSubmission(): void {
   localStorage.removeItem(STORAGE_KEYS.USER_SUBMITTED)
+  localStorage.removeItem(STORAGE_KEYS.USER_SUBMISSION_COUNT)
 }
 
 // Geocoding result type
